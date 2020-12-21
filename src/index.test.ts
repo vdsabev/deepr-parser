@@ -1,31 +1,33 @@
 import { filter, find } from 'lodash'
 import { parse } from './index'
 
-const data = {
-  movie: {
-    title: 'Inception',
-    year: 2010,
+const Inception = {
+  id: '1',
+  title: 'Inception',
+  year: 2010,
+  genre: 'action',
+  director: {
+    name: 'Christopher Nolan',
   },
-  movies: [
-    {
-      id: '1',
-      title: 'Inception',
-      year: 2010,
-      genre: 'action',
-    },
-    {
-      id: '2',
-      title: 'The Matrix',
-      year: 1999,
-      genre: 'action',
-    },
-    {
-      id: '3',
-      title: 'Forrest Gump',
-      year: 1994,
-      genre: 'drama',
-    },
-  ],
+}
+
+const TheMatrix = {
+  id: '2',
+  title: 'The Matrix',
+  year: 1999,
+  genre: 'action',
+}
+
+const ForrestGump = {
+  id: '3',
+  title: 'Forrest Gump',
+  year: 1994,
+  genre: 'drama',
+}
+
+const data = {
+  movie: Inception,
+  movies: [Inception, TheMatrix, ForrestGump],
   getMovie(query) {
     return find(data.movies, query)
   },
@@ -269,6 +271,27 @@ describe(`parse`, () => {
       )
     ).toEqual({
       movie: 'Inception',
+    })
+  })
+
+  it(`queries object recursively`, () => {
+    expect(
+      parse(
+        {
+          movie: {
+            director: {
+              name: true,
+            },
+          },
+        },
+        data
+      )
+    ).toEqual({
+      movie: {
+        director: {
+          name: 'Christopher Nolan',
+        },
+      },
     })
   })
 })
