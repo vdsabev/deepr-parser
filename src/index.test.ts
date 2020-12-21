@@ -1,4 +1,4 @@
-import { find } from 'lodash'
+import { filter, find } from 'lodash'
 import { parse } from './index'
 
 const data = {
@@ -8,18 +8,29 @@ const data = {
   },
   movies: [
     {
-      id: 'abc123',
+      id: '1',
       title: 'Inception',
       year: 2010,
+      genre: 'action',
     },
     {
-      id: 'def456',
+      id: '2',
       title: 'The Matrix',
       year: 1999,
+      genre: 'action',
+    },
+    {
+      id: '3',
+      title: 'Forrest Gump',
+      year: 1994,
+      genre: 'drama',
     },
   ],
   getMovie(query) {
     return find(data.movies, query)
+  },
+  getMovies(query) {
+    return filter(data.movies, query)
   },
 }
 
@@ -55,7 +66,7 @@ describe(`parse`, () => {
       )
     ).toEqual({
       movies: {
-        length: 2,
+        length: 3,
       },
     })
   })
@@ -81,6 +92,10 @@ describe(`parse`, () => {
         {
           title: 'The Matrix',
           year: 1999,
+        },
+        {
+          title: 'Forrest Gump',
+          year: 1994,
         },
       ],
     })
@@ -108,7 +123,7 @@ describe(`parse`, () => {
     })
   })
 
-  it(`slices items out of an array`, () => {
+  it(`gets an item out of an array by index`, () => {
     expect(
       parse(
         {
@@ -145,7 +160,7 @@ describe(`parse`, () => {
       )
     ).toEqual({
       movies: {
-        length: 2,
+        length: 3,
         items: [
           {
             title: 'Inception',
@@ -155,17 +170,21 @@ describe(`parse`, () => {
             title: 'The Matrix',
             year: 1999,
           },
+          {
+            title: 'Forrest Gump',
+            year: 1994,
+          },
         ],
       },
     })
   })
 
-  it(`invokes methods`, () => {
+  it(`invokes a method`, () => {
     expect(
       parse(
         {
           getMovie: {
-            '()': [{ id: 'abc123' }],
+            '()': [{ id: '1' }],
             title: true,
           },
         },
@@ -175,6 +194,81 @@ describe(`parse`, () => {
       getMovie: {
         title: 'Inception',
       },
+    })
+  })
+
+  it(`gets the result of a method`, () => {
+    expect(
+      parse(
+        {
+          getMovie: {
+            '()': [{ id: '1' }],
+            '=>': {
+              title: true,
+              year: true,
+            },
+          },
+        },
+        data
+      )
+    ).toEqual({
+      getMovie: {
+        title: 'Inception',
+        year: 2010,
+      },
+    })
+  })
+
+  it(`aliases keys`, () => {
+    expect(
+      parse(
+        {
+          'getMovies=>actionMovies': {
+            '()': [{ genre: 'action' }],
+            '=>': {
+              '[]': [],
+              title: true,
+            },
+          },
+          'getMovies=>dramaMovies': {
+            '()': [{ genre: 'drama' }],
+            '=>': {
+              '[]': [],
+              title: true,
+            },
+          },
+        },
+        data
+      )
+    ).toEqual({
+      actionMovies: [
+        {
+          title: 'Inception',
+        },
+        {
+          title: 'The Matrix',
+        },
+      ],
+      dramaMovies: [
+        {
+          title: 'Forrest Gump',
+        },
+      ],
+    })
+  })
+
+  it(`unnests context`, () => {
+    expect(
+      parse(
+        {
+          movie: {
+            'title=>': true,
+          },
+        },
+        data
+      )
+    ).toEqual({
+      movie: 'Inception',
     })
   })
 })
